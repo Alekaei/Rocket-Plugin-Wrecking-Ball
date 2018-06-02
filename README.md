@@ -1,4 +1,7 @@
-﻿# Wrecking Ball
+Original By: https://github.com/ApokPT/Rocket-Plugin-Wrecking-Ball
+Forked From: https://github.com/cartman-2000/Rocket-Plugin-Wrecking-Ball
+
+# Wrecking Ball
 ### Destroy stuff in the server to clear lag
 
 This addon allows you clear stuff in a defined radius using filters
