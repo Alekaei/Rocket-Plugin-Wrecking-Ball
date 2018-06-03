@@ -11,7 +11,7 @@ using UnityEngine;
 
 using Logger = Rocket.Core.Logging.Logger;
 
-namespace ApokPT.RocketPlugins
+namespace WreckingBall
 {
     class CommandListVehicles : IRocketCommand
     {
@@ -70,7 +70,7 @@ namespace ApokPT.RocketPlugins
                 // skip the vehicle in the list if it is destroyed or drowned.
                 if (vehicle.isDead || vehicle.isDrowned)
                     continue;
-                if (WreckingBall.Instance.Configuration.Instance.EnablePlayerInfo)
+                if (WreckingBall.ConfigurationInstance.EnablePlayerInfo)
                     getPInfo = WreckingBall.IsPInfoLibLoaded();
                 string lockedBy = getPInfo ? WreckingBall.Instance.PInfoGenerateMessage((ulong)vehicle.lockedOwner) : vehicle.lockedOwner.ToString();
                 ulong signOwner = 0;

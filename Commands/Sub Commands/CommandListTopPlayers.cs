@@ -1,17 +1,11 @@
-﻿using Rocket.API;
-using Rocket.Unturned.Chat;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using System;
+using Rocket.API.Commands;
 
-using Logger = Rocket.Core.Logging.Logger;
-
-namespace ApokPT.RocketPlugins
+namespace WreckingBall
 {
-    class CommandListTopPlayers : IRocketCommand
-    {
+	class CommandListTopPlayers : ICommand
+	{
+		/*
         public List<string> Aliases
         {
             get { return new List<string>() { "listtp" }; }
@@ -47,11 +41,11 @@ namespace ApokPT.RocketPlugins
             // Get player elements list.
             DestructionProcessing.Wreck(caller, "", 0, Vector3.zero, WreckType.Counts, FlagType.SteamID, 0, 0);
             // Grab what we need from the list.
-            Dictionary<ulong, int> shortenedList = DestructionProcessing.pElementCounts.Where(r => r.Value >= WreckingBall.Instance.Configuration.Instance.PlayerElementListCutoff).OrderBy(v => v.Value).ToDictionary(k => k.Key, v => v.Value);
+            Dictionary<ulong, int> shortenedList = DestructionProcessing.pElementCounts.Where(r => r.Value >= WreckingBall.ConfigurationInstance.PlayerElementListCutoff).OrderBy(v => v.Value).ToDictionary(k => k.Key, v => v.Value);
             DestructionProcessing.pElementCounts.Clear();
 
             bool getPInfo = false;
-            if (WreckingBall.Instance.Configuration.Instance.EnablePlayerInfo)
+            if (WreckingBall.ConfigurationInstance.EnablePlayerInfo)
                 getPInfo = WreckingBall.IsPInfoLibLoaded();
 
             foreach (KeyValuePair<ulong, int> value in shortenedList)
@@ -63,5 +57,29 @@ namespace ApokPT.RocketPlugins
                     UnturnedChat.Say(caller, msg, Color.yellow);
             }
         }
-    }
+		*/
+		public string Name => "listtopplayers";
+
+		public string [] Aliases => throw new NotImplementedException ();
+
+		public string Summary => throw new NotImplementedException ();
+
+		public string Description => throw new NotImplementedException ();
+
+		public string Permission => throw new NotImplementedException ();
+
+		public string Syntax => throw new NotImplementedException ();
+
+		public IChildCommand [] ChildCommands => throw new NotImplementedException ();
+
+		public void Execute (ICommandContext context)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public bool SupportsUser (Type user)
+		{
+			throw new NotImplementedException ();
+		}
+	}
 }

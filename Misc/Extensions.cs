@@ -1,10 +1,9 @@
-﻿using Rocket.API.Extensions;
-using SDG.Unturned;
+﻿using SDG.Unturned;
 using Steamworks;
 using System;
 using UnityEngine;
 
-namespace ApokPT.RocketPlugins
+namespace WreckingBall
 {
     public static class Extensions
     {
@@ -16,20 +15,6 @@ namespace ApokPT.RocketPlugins
             regionPoint += new Vector3(64, 0, 64);
             if (Vector3.Distance(regionPoint, new Vector3(point.x, 0f, point.z)) > radius + 92)
                 return true;
-            return false;
-        }
-
-        public static bool GetVectorFromCmd(this string[] cmd, int idxStart, out Vector3 position)
-        {
-            position = Vector3.zero;
-            float? x = cmd.GetFloatParameter(idxStart);
-            float? y = cmd.GetFloatParameter(idxStart + 1);
-            float? z = cmd.GetFloatParameter(idxStart + 2);
-            if (x.HasValue && y.HasValue && z.HasValue)
-            {
-                position = new Vector3((float)x, (float)y, (float)z);
-                return true;
-            }
             return false;
         }
 

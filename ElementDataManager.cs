@@ -1,4 +1,5 @@
 ﻿using Rocket.API;
+using Rocket.API.Plugins;
 using Rocket.Core;
 using Rocket.Core.RCON;
 using Rocket.Unturned.Chat;
@@ -9,17 +10,19 @@ using UnityEngine;
 
 using Logger = Rocket.Core.Logging.Logger;
 
-namespace ApokPT.RocketPlugins
+namespace WreckingBall
 {
     public class ElementDataManager
     {
+		private WreckingBallPlugin wreckPlugin;
         internal Dictionary<char, Category> categorys = new Dictionary<char, Category>();
         internal Dictionary<ushort, Element> elements = new Dictionary<ushort, Element>();
 
         internal Dictionary<BuildableType, Dictionary<char, uint>> reportLists = new Dictionary<BuildableType, Dictionary<char, uint>>();
 
-        public ElementDataManager()
+        public ElementDataManager(IPlugin plugin)
         {
+			wreckPlugin = plugin as WreckingBallPlugin;
             Load();
             reportLists.Add(BuildableType.Element, new Dictionary<char, uint>());
             reportLists.Add(BuildableType.VehicleElement, new Dictionary<char, uint>());
@@ -27,7 +30,7 @@ namespace ApokPT.RocketPlugins
 
         private void Load()
         {
-            foreach(Category category in WreckingBall.Instance.Configuration.Instance.Categories)
+            foreach(Category category in wreckPlugin.ConfigurationInstance.Categories)
             {
                 if(category.Id == '*')
                 {
@@ -40,7 +43,7 @@ namespace ApokPT.RocketPlugins
                 }
                 categorys.Add(category.Id,category);
             }
-            foreach(Element element in WreckingBall.Instance.Configuration.Instance.Elements)
+            foreach(Element element in wreckPlugin.ConfigurationInstance.Elements)
             {
                 if (element.CategoryId == '*')
                 {
@@ -146,7 +149,7 @@ namespace ApokPT.RocketPlugins
                 }
 
 
-                if (WreckingBall.Instance.Configuration.Instance.LogScans)
+                if (wreckPlugin.ConfigurationInstance.LogScans)
                     Logger.Log(msg, cat.Color);
                 else
                 {
@@ -156,7 +159,7 @@ namespace ApokPT.RocketPlugins
                     if (R.Settings.Instance.RCON.Enabled)
                         RCONServer.Broadcast(msg);
                 }
-                if (WreckingBall.Instance.Configuration.Instance.PrintToChat && !(caller is ConsolePlayer))
+                if (wreckPlugin.ConfigurationInstance.PrintToChat && !(caller is ConsolePlayer))
                     UnturnedChat.Say(caller, msg, Color.yellow);
             }
         }

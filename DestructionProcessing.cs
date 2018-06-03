@@ -1,18 +1,11 @@
-﻿using PlayerInfoLibrary;
-using Rocket.API;
-using Rocket.Core;
-using Rocket.Unturned.Chat;
-using Rocket.Unturned.Player;
-using SDG.Unturned;
+﻿using SDG.Unturned;
 using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-using Logger = Rocket.Core.Logging.Logger;
-
-namespace ApokPT.RocketPlugins
+namespace WreckingBall
 {
     internal class DestructionProcessing
     {
@@ -56,7 +49,7 @@ namespace ApokPT.RocketPlugins
             {
                 WreckingBall.ElementData.reportLists[BuildableType.Element].Clear();
                 WreckingBall.ElementData.reportLists[BuildableType.VehicleElement].Clear();
-                if (WreckingBall.Instance.Configuration.Instance.EnablePlayerInfo)
+                if (WreckingBall.ConfigurationInstance.EnablePlayerInfo)
                 {
                     pInfoLibLoaded = WreckingBall.IsPInfoLibLoaded();
                 }
@@ -133,12 +126,12 @@ namespace ApokPT.RocketPlugins
                     }
                 }
 
-                if (type == WreckType.Cleanup && vehicle.asset.engine != EEngine.TRAIN && WreckingBall.Instance.Configuration.Instance.CleanupLockedCars && vehicle.isLocked && vehicle.lockedOwner == (CSteamID)steamID)
+                if (type == WreckType.Cleanup && vehicle.asset.engine != EEngine.TRAIN && WreckingBall.ConfigurationInstance.CleanupLockedCars && vehicle.isLocked && vehicle.lockedOwner == (CSteamID)steamID)
                 {
                     cleanupList.Add(new Destructible(vehicle.transform, ElementType.Vehicle, vehicle));
                 }
                 // Add Locked vehicles to the top players count, if the cleanup locked vehicles feature is active.
-                if (type == WreckType.Counts && vehicle.asset.engine != EEngine.TRAIN && WreckingBall.Instance.Configuration.Instance.CleanupLockedCars && vehicle.isLocked)
+                if (type == WreckType.Counts && vehicle.asset.engine != EEngine.TRAIN && WreckingBall.ConfigurationInstance.CleanupLockedCars && vehicle.isLocked)
                 {
                     ulong vOwner = (ulong)vehicle.lockedOwner;
                     if (pElementCounts.ContainsKey(vOwner))
@@ -320,7 +313,7 @@ namespace ApokPT.RocketPlugins
 
         internal static double CalcProcessTime()
         {
-            return Math.Round(((dIdxCount - dIdx) * (1 / (WreckingBall.Instance.Configuration.Instance.DestructionRate * WreckingBall.Instance.Configuration.Instance.DestructionsPerInterval))), 2);
+            return Math.Round(((dIdxCount - dIdx) * (1 / (WreckingBall.ConfigurationInstance.DestructionRate * WreckingBall.ConfigurationInstance.DestructionsPerInterval))), 2);
         }
 
         internal static void Abort(WreckType type)
@@ -368,7 +361,7 @@ namespace ApokPT.RocketPlugins
                         Logger.LogException(ex);
                     }
                     plbIdx++;
-                    if (plbIdx >= WreckingBall.Instance.Configuration.Instance.CleanupPerInterval || plbIdx >= playersListBuildables.Count)
+                    if (plbIdx >= WreckingBall.ConfigurationInstance.CleanupPerInterval || plbIdx >= playersListBuildables.Count)
                     {
                         Logger.Log("Finished with cleaning up the player elements in this run.");
                         plbIdx = 0;
@@ -430,7 +423,7 @@ namespace ApokPT.RocketPlugins
                 else
                     Logger.Log(string.Format("Player data folders for player: {0} [{1}] ({2}) not found.", pf[1].ToString(), pf[2].ToString(), (ulong)pf[0]));
                 plfIdx++;
-                if (plfIdx >= WreckingBall.Instance.Configuration.Instance.CleanupPerInterval || plfIdx >= playersListFiles.Count)
+                if (plfIdx >= WreckingBall.ConfigurationInstance.CleanupPerInterval || plfIdx >= playersListFiles.Count)
                 {
                     Logger.Log("Finished with cleaning up the player's data files in this run.");
                     plfIdx = 0;
@@ -439,14 +432,14 @@ namespace ApokPT.RocketPlugins
                 }
             }
 
-            if ((DateTime.Now - lastGetCleanupInfo).TotalSeconds > WreckingBall.Instance.Configuration.Instance.CleanupIntervalTime * 60)
+            if ((DateTime.Now - lastGetCleanupInfo).TotalSeconds > WreckingBall.ConfigurationInstance.CleanupIntervalTime * 60)
             {
                 lastGetCleanupInfo = DateTime.Now;
-                if (WreckingBall.Instance.Configuration.Instance.BuildableCleanup)
+                if (WreckingBall.ConfigurationInstance.BuildableCleanup)
                 {
                     if (playersListBuildables.Count == 0 && WreckingBall.IsPInfoLibLoaded())
                     {
-                        GetCleanupList(OptionType.Buildables, WreckingBall.Instance.Configuration.Instance.BuildableWaitTime, WreckingBall.Instance.Configuration.Instance.CleanupPerInterval);
+                        GetCleanupList(OptionType.Buildables, WreckingBall.ConfigurationInstance.BuildableWaitTime, WreckingBall.ConfigurationInstance.CleanupPerInterval);
                         if (playersListBuildables.Count != 0)
                         {
                             // Start cleanup sequence for the players elements.
@@ -466,11 +459,11 @@ namespace ApokPT.RocketPlugins
                         }
                     }
                 }
-                if (WreckingBall.Instance.Configuration.Instance.PlayerDataCleanup)
+                if (WreckingBall.ConfigurationInstance.PlayerDataCleanup)
                 {
                     if (playersListFiles.Count == 0 && WreckingBall.IsPInfoLibLoaded())
                     {
-                        GetCleanupList(OptionType.PlayerFiles, WreckingBall.Instance.Configuration.Instance.PlayerDataWaitTime, WreckingBall.Instance.Configuration.Instance.CleanupPerInterval);
+                        GetCleanupList(OptionType.PlayerFiles, WreckingBall.ConfigurationInstance.PlayerDataWaitTime, WreckingBall.ConfigurationInstance.CleanupPerInterval);
                         if (playersListFiles.Count != 0)
                         {
                             // Start cleanup sequence for the players files.
@@ -499,7 +492,7 @@ namespace ApokPT.RocketPlugins
                     for (int e = 0; e < DataCount; e++)
                     {
                         bData = barricadeRegion.barricades[e];
-                        if (WreckingBall.ElementData.filterItem(bData.barricade.id, new List<char> { WreckingBall.Instance.Configuration.Instance.VehicleSignFlag }))
+                        if (WreckingBall.ElementData.filterItem(bData.barricade.id, new List<char> { WreckingBall.ConfigurationInstance.VehicleSignFlag }))
                         {
                             match = true;
                             elementSteamID = bData.owner;
@@ -515,7 +508,7 @@ namespace ApokPT.RocketPlugins
 
         internal static void HandleVehicleCap()
         {
-            if ((DateTime.Now - lastVehiclesCapCheck).TotalSeconds > WreckingBall.Instance.Configuration.Instance.VCapCheckInterval)
+            if ((DateTime.Now - lastVehiclesCapCheck).TotalSeconds > WreckingBall.ConfigurationInstance.VCapCheckInterval)
             {
                 lastVehiclesCapCheck = DateTime.Now;
                 Dictionary<InteractableVehicle, int> vList = new Dictionary<InteractableVehicle, int>();
@@ -535,19 +528,19 @@ namespace ApokPT.RocketPlugins
                     else
                         vList.Add(vehicle, 0);
                 }
-                if (vList.Count > WreckingBall.Instance.Configuration.Instance.MaxVehiclesAllowed)
+                if (vList.Count > WreckingBall.ConfigurationInstance.MaxVehiclesAllowed)
                 {
-                    int numToDestroy = vList.Count - WreckingBall.Instance.Configuration.Instance.MaxVehiclesAllowed;
+                    int numToDestroy = vList.Count - WreckingBall.ConfigurationInstance.MaxVehiclesAllowed;
                     int i = 0;
                     Logger.Log(string.Format("Vehicle Cap Check: Count over max by: {0} vehicles, starting cleanup process.", numToDestroy), ConsoleColor.Yellow);
-                    if (WreckingBall.Instance.Configuration.Instance.VCapDestroyByElementCount)
+                    if (WreckingBall.ConfigurationInstance.VCapDestroyByElementCount)
                     {
                         var sort = vList.OrderBy(c => c.Value);
                         vList = sort.ToDictionary(d => d.Key, d => d.Value);
                     }
                     bool useSafeGuards = true;
                     bool getPInfo = false;
-                    if (WreckingBall.Instance.Configuration.Instance.EnablePlayerInfo)
+                    if (WreckingBall.ConfigurationInstance.EnablePlayerInfo)
                         getPInfo = WreckingBall.IsPInfoLibLoaded();
                     restart:
                     int v = 0;
@@ -560,16 +553,16 @@ namespace ApokPT.RocketPlugins
                             continue;
                         ulong elementOwner = 0;
                         bool hasSign = HasFlaggedElement(vehicle.Key.transform, out elementOwner);
-                        if (useSafeGuards && (WreckingBall.Instance.Configuration.Instance.LowElementCountOnly || WreckingBall.Instance.Configuration.Instance.KeepVehiclesWithSigns))
+                        if (useSafeGuards && (WreckingBall.ConfigurationInstance.LowElementCountOnly || WreckingBall.ConfigurationInstance.KeepVehiclesWithSigns))
                         {
-                            if (WreckingBall.Instance.Configuration.Instance.LimitSafeGuards && v > Math.Round(WreckingBall.Instance.Configuration.Instance.MaxVehiclesAllowed * WreckingBall.Instance.Configuration.Instance.LimitSafeGuardsRatio + numToDestroy, 0))
+                            if (WreckingBall.ConfigurationInstance.LimitSafeGuards && v > Math.Round(WreckingBall.ConfigurationInstance.MaxVehiclesAllowed * WreckingBall.ConfigurationInstance.LimitSafeGuardsRatio + numToDestroy, 0))
                             {
                                 useSafeGuards = false;
                                 goto restart;
                             }
-                            if (WreckingBall.Instance.Configuration.Instance.LowElementCountOnly && WreckingBall.Instance.Configuration.Instance.MinElementCount <= vehicle.Value)
+                            if (WreckingBall.ConfigurationInstance.LowElementCountOnly && WreckingBall.ConfigurationInstance.MinElementCount <= vehicle.Value)
                                 continue;
-                            if (WreckingBall.Instance.Configuration.Instance.KeepVehiclesWithSigns && hasSign)
+                            if (WreckingBall.ConfigurationInstance.KeepVehiclesWithSigns && hasSign)
                                 continue;
 
                         }
@@ -623,7 +616,7 @@ namespace ApokPT.RocketPlugins
                 int i = 0;
                 EPlayerKill pKill;
                 uint xp;
-                while (((dIdx < dIdxCount && type == WreckType.Wreck) || (cdIdx < cdIdxCount && type == WreckType.Cleanup)) && i < WreckingBall.Instance.Configuration.Instance.DestructionsPerInterval)
+                while (((dIdx < dIdxCount && type == WreckType.Wreck) || (cdIdx < cdIdxCount && type == WreckType.Cleanup)) && i < WreckingBall.ConfigurationInstance.DestructionsPerInterval)
                 {
                     Destructible element = type == WreckType.Wreck ? destroyList[dIdx] : cleanupList[cdIdx];
 

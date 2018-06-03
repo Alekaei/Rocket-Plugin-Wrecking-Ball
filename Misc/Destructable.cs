@@ -1,7 +1,7 @@
 using SDG.Unturned;
 using UnityEngine;
 
-namespace ApokPT.RocketPlugins
+namespace WreckingBall
 {
     class Destructible
     {
