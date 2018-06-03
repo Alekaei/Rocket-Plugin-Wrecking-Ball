@@ -1,7 +1,10 @@
-﻿using Rocket.API.Scheduler;
+﻿using Rocket.API.Permissions;
+using Rocket.API.Player;
+using Rocket.API.Scheduler;
 using Rocket.API.User;
 using Rocket.Core.I18N;
 using Rocket.UnityEngine.Extensions;
+using Rocket.Unturned.Player;
 using SDG.Unturned;
 using System;
 using System.Collections.Generic;
@@ -15,17 +18,19 @@ namespace WreckingBall
 		private WreckingBallPlugin wreckPlugin;
 		private List<DestructionRequest> pendingConfirmation;
 		private List<DestructionRequest> scanQueue;
-		private Dictionary<int, object> destroyQueue; 
+		private Dictionary<int, object> destroyQueue;
 
 		private ITaskScheduler taskScheduler;
+		private IPermissionProvider permissionProvider;
 
 		private DateTime lastDestructionRun;
 		private int amountDestroyed;
 
-		public DestructionHandler (WreckingBallPlugin plugin, ITaskScheduler taskScheduler)
+		public DestructionHandler (WreckingBallPlugin plugin, ITaskScheduler taskScheduler, IPermissionProvider permissionProvider)
 		{
 			this.wreckPlugin = plugin;
 			this.taskScheduler = taskScheduler;
+			this.permissionProvider = permissionProvider;
 
 			pendingConfirmation = new List<DestructionRequest> ();
 			scanQueue = new List<DestructionRequest> ();
@@ -39,7 +44,14 @@ namespace WreckingBall
 			destroyQueue = new Dictionary<int, object> ();
 
 			taskScheduler.ScheduleEveryFrame (wreckPlugin, ScanRun);
+			lastDestructionRun = DateTime.Now;
 			taskScheduler.ScheduleEveryFrame (wreckPlugin, DestructionRun);
+
+			if (wreckPlugin.ConfigurationInstance.EnableVehicleCap)
+			{
+				lastVehicleCapRun = DateTime.Now;
+				taskScheduler.ScheduleEveryFrame (wreckPlugin, VehicleCapRun);
+			}
 		}
 
 		public void AddRequest (IUser user, string filter, uint radius, Vector3 position, WreckType wreckType, ulong steamID, ushort itemID)
@@ -96,7 +108,7 @@ namespace WreckingBall
 			DestructionRequest request = scanQueue.First ();
 
 			int objectsFound = 0;
-			
+
 			foreach (BarricadeRegion region in BarricadeManager.regions)
 			{
 				foreach (BarricadeData data in region.barricades)
@@ -108,8 +120,17 @@ namespace WreckingBall
 						continue;
 
 					if (request.steamID != 0)
+					{
 						if (data.owner != request.steamID)
 							continue;
+						if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve<IPlayerManager> ().GetPlayer (request.steamID.ToString ()), new string []
+							{
+								"wreckingball.skip.barricade",
+								"wreckingball.skip.*",
+								"wreckingball.*"
+							}) == PermissionResult.Grant)
+							continue;
+					}
 
 					if (request.itemID != 0)
 						if (data.barricade.id != request.itemID)
@@ -118,6 +139,14 @@ namespace WreckingBall
 					if (request.filters != null)
 						if (!wreckPlugin.ConfigurationInstance.Elements.Any (c => request.filters.Contains (c.CategoryId) && c.Id == data.barricade.id || request.filters.Contains ('*')))
 							continue;
+
+					if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (request.user, new string []
+						{
+							"wreckingball.skip.barricade",
+							"wreckingball.skip.*",
+							"wreckingball.*"
+						}) == PermissionResult.Grant)
+						continue;
 
 					objectsFound++;
 					if (request.wreckType == WreckType.Scan)
@@ -137,8 +166,17 @@ namespace WreckingBall
 						continue;
 
 					if (request.steamID != 0)
+					{
 						if (data.owner != request.steamID)
 							continue;
+							if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve <IPlayerManager> ().GetPlayer (request.steamID.ToString ()), new string []
+							{
+								"wreckingball.skip.structure",
+								"wreckingball.skip.*",
+								"wreckingball.*"
+							}) == PermissionResult.Grant)
+							continue;
+					}
 
 					if (request.itemID != 0)
 						if (data.structure.id != request.itemID)
@@ -147,6 +185,14 @@ namespace WreckingBall
 					if (request.filters != null)
 						if (!wreckPlugin.ConfigurationInstance.Elements.Any (c => request.filters.Contains (c.CategoryId) && c.Id == data.structure.id || request.filters.Contains ('*')))
 							continue;
+
+					if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (request.user, new string []
+						{
+							"wreckingball.skip.structure",
+							"wreckingball.skip.*",
+							"wreckingball.*"
+						}) == PermissionResult.Grant)
+						continue;
 
 					objectsFound++;
 					if (request.wreckType == WreckType.Scan)
@@ -164,8 +210,17 @@ namespace WreckingBall
 					continue;
 
 				if (request.steamID != 0)
+				{
 					if (vehicle.lockedOwner.m_SteamID != request.steamID)
 						continue;
+					if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve<IPlayerManager> ().GetPlayer (request.steamID.ToString ()), new string []
+						{
+							"wreckingball.skip.vehicle",
+							"wreckingball.skip.*",
+							"wreckingball.*"
+						}) == PermissionResult.Grant)
+						continue;
+				}
 
 				if (request.itemID != 0)
 					if (vehicle.id != request.itemID)
@@ -174,6 +229,14 @@ namespace WreckingBall
 				if (request.filters != null)
 					if (!wreckPlugin.ConfigurationInstance.Elements.Any (c => request.filters.Contains (c.CategoryId) && c.Id == vehicle.id || request.filters.Contains ('*')))
 						continue;
+
+				if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (request.user, new string []
+					{
+						"wreckingball.skip.vehicle",
+						"wreckingball.skip.*",
+							"wreckingball.*"
+					}) == PermissionResult.Grant)
+					continue;
 
 				objectsFound++;
 				if (request.wreckType == WreckType.Scan)
@@ -236,11 +299,11 @@ namespace WreckingBall
 		{
 			if (destroyQueue.Count == 0)
 				return;
-			if ((DateTime.Now - lastDestructionRun).TotalMilliseconds <= wreckPlugin.ConfigurationInstance.DestructionRate && 
+			if ((DateTime.Now - lastDestructionRun).TotalMilliseconds <= (1000/wreckPlugin.ConfigurationInstance.DestructionInterval) &&
 				amountDestroyed >= wreckPlugin.ConfigurationInstance.DestructionsPerInterval)
 				return;
 
-			KeyValuePair <int, object> nextDestroy = destroyQueue.First ();
+			KeyValuePair<int, object> nextDestroy = destroyQueue.First ();
 
 			if (nextDestroy.Value is BarricadeData bData)
 			{
@@ -275,12 +338,75 @@ namespace WreckingBall
 				lastDestructionRun = DateTime.Now;
 		}
 
+		private DateTime lastVehicleCapRun;
+		public void VehicleCapRun ()
+		{
+			if ((DateTime.Now - lastVehicleCapRun).TotalSeconds < wreckPlugin.ConfigurationInstance.VehicleDestructionInterval)
+				return;
+			int runCount = 0;
+
+			while (VehicleManager.vehicles.Count > wreckPlugin.ConfigurationInstance.MaxVehiclesAllowed)
+			{
+				InteractableVehicle vehicle = VehicleManager.vehicles.FirstOrDefault ();
+
+				if (vehicle == null)
+				{
+					lastVehicleCapRun = DateTime.Now;
+					return;
+				}
+
+				if (vehicle.isLocked && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve <IPlayerManager> ().GetPlayer (vehicle.lockedOwner.m_SteamID.ToString ()), new string []
+					{
+						"wreck.skip.vehicle",
+						"wreck.skip.*",
+						"wreck.*"
+					}) == PermissionResult.Grant)
+				{
+					lastVehicleCapRun = DateTime.Now;
+					return;
+				}
+
+				bool skip = false;
+				int count = 0;
+
+				BarricadeManager.tryGetPlant (vehicle.transform, out byte x, out byte y, out ushort plant, out BarricadeRegion region);
+				count += region.barricades.Count;
+
+				if (wreckPlugin.ConfigurationInstance.KeepVehiclesWithSigns && region.drops.Any (c => c.interactable is InteractableSign sign && sign.text.Contains (wreckPlugin.ConfigurationInstance.VehicleSignFlag)))
+					continue;
+
+				foreach (var tranCar in vehicle.trainCars)
+				{
+					BarricadeManager.tryGetPlant (vehicle.transform, out x, out y, out plant, out BarricadeRegion tRegion);
+					count += tRegion.barricades.Count;
+					if (wreckPlugin.ConfigurationInstance.KeepVehiclesWithSigns && tRegion.drops.Any (c => c.interactable is InteractableSign sign && sign.text.Contains (wreckPlugin.ConfigurationInstance.VehicleSignFlag)))
+					{
+						skip = true;
+						break;
+					}
+				}
+
+				if (wreckPlugin.ConfigurationInstance.LowElementCountOnly)
+					if (count >= wreckPlugin.ConfigurationInstance.MinElementCount)
+						skip = true;
+
+				if (!skip)
+					vehicle.askDamage (ushort.MaxValue, true);
+
+				runCount++;
+				if (runCount > 15)
+					break;
+			}
+
+			lastVehicleCapRun = DateTime.Now;
+		}
+
 		public string FormattedTimeUntilDestroyed ()
 		{
 			float time = (float) wreckPlugin.ConfigurationInstance.DestructionsPerInterval * (float) (destroyQueue.Count / wreckPlugin.ConfigurationInstance.DestructionsPerInterval);
 
 			TimeSpan estimated = TimeSpan.FromSeconds (time);
-			
+
 			string formatted = "";
 
 			if (estimated.Minutes > 0)

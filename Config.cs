@@ -6,29 +6,21 @@ namespace WreckingBall
 {
 	public class Config
 	{
-		public float DestructionRate { get; set; } = 10;
+		public float DestructionInterval { get; set; } = 10;
 		public uint DestructionsPerInterval { get; set; } = 10;
-		
-		public bool EnableCleanup { get; set; } = false;
-		public bool BuildableCleanup { get; set; } = true;
-		public float BuildableWaitTime { get; set; } = 30;
-		public bool CleanupLockedCars { get; set; } = true;
-		public bool PlayerDataCleanup { get; set; } = true;
-		public float PlayerDataWaitTime { get; set; } = 45;
-		public float CleanupIntervalTime { get; set; } = 5;
-		public byte CleanupPerInterval { get; set; } = 10;
 
+		// Clear vehicles from server ever `Vehicle Destruction interval` seconds
 		public bool EnableVehicleCap { get; set; } = false;
-		public bool VCapDestroyByElementCount { get; set; } = false;
+		public uint VehicleDestructionInterval { get; set; } = 600;
 		public ushort MaxVehiclesAllowed { get; set; } = 70;
-		public uint VCapCheckInterval { get; set; } = 600;
+
+		// Only destroys vehicle if buildables bellow `Min Element Count`
 		public bool LowElementCountOnly { get; set; } = false;
 		public ushort MinElementCount { get; set; } = 6;
+
+		// Dont destroy vehicle if it has a sign with value `n`
 		public bool KeepVehiclesWithSigns { get; set; } = true;
 		public string VehicleSignFlag { get; set; } = "n";
-
-		public bool LimitSafeGuards { get; set; } = false;
-		public float LimitSafeGuardsRatio { get; set; } = .6f;
 
 		[ConfigArray (ElementName = "Catagory")]
 		public List<Category> Categories { get; set; } = new List<Category> ()

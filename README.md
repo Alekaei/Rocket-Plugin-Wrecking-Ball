@@ -38,9 +38,3 @@ a				| Agriculture (plantations / platers)
 v				| Vehicles
 \*				| Everything except Zombies
 z				| Zombies (killing too many zombies at once, crashes the server)
-
-
-## Available Permissions
-Permission | Action
-------- | -------
-wreck				| allow caller to wreck stuff

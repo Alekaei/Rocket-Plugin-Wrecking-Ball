@@ -1,4 +1,5 @@
 ﻿using Rocket.API.DependencyInjection;
+using Rocket.API.Permissions;
 using Rocket.API.Scheduler;
 using Rocket.API.User;
 using Rocket.Core.Logging;
@@ -11,17 +12,12 @@ namespace WreckingBall
 	{
 		private IUserManager userManager;
 		private ITaskScheduler taskScheduler;
+		private IPermissionProvider permissionProvider;
 
 		public readonly DestructionHandler DestructionHandler;
 
 		public override Dictionary<string, string> DefaultTranslations => new Dictionary<string, string> ()
 		{
-			{ "wreckingball_dcu_not_enabled", "This command can only be used if the cleanup feature is enabled on the server." },
-			{ "wreckingball_dcu_player_not_found", "Couldn't find a player by that name on the server." },
-			{ "wreckingball_dcu_hasnt_played", "Player hasn't played on this server yet." },
-			{ "wreckingball_dcu_cleanup_disabled", "Auto Cleanup has been disabled for player {0} [{1}] ({2})" },
-			{ "wreckingball_dcu_cleanup_enabled", "Auto Cleanup has been enabled for player {0} [{1}] ({2})" },
-			// Renewed
 			{ "wreckingball_prompt", "Type '<color=green>/wreck confirm</color>' or '<color=red>/wreck abort</color>'." },
 
 			{ "wreckingball_confirmed", "Confirmed your last wreck request, calculating objects." },
@@ -38,21 +34,23 @@ namespace WreckingBall
 		protected WreckingBallPlugin (
 			IDependencyContainer container,
 			IUserManager userManager,
-			ITaskScheduler taskScheduler
+			ITaskScheduler taskScheduler,
+			IPermissionProvider permissionProvider
 			) : base ("WreckingBallII", container)
 		{
 			this.userManager = userManager;
 			this.taskScheduler = taskScheduler;
-			DestructionHandler = new DestructionHandler (this, taskScheduler);
+			this.permissionProvider = permissionProvider;
+			DestructionHandler = new DestructionHandler (this, taskScheduler, permissionProvider);
 		}
 
 		protected override void OnLoad (bool isFromReload)
 		{
 			DestructionHandler.Load ();
 
-			if (ConfigurationInstance.DestructionRate <= 0)
+			if (ConfigurationInstance.DestructionInterval <= 0)
 			{
-				ConfigurationInstance.DestructionRate = 1;
+				ConfigurationInstance.DestructionInterval = 1;
 				Logger.LogWarning ("DestructionRate config value must be at or above 1.");
 			}
 			if (ConfigurationInstance.DestructionsPerInterval < 1)
