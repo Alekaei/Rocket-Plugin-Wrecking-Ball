@@ -7,7 +7,7 @@
     <ProjectGuid>{7AED9B11-E8F6-422A-A021-B5B3BB53682B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApokPT.RocketPlugins</RootNamespace>
+    <RootNamespace>WreckingBall</RootNamespace>
     <AssemblyName>WreckingBall</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -31,75 +31,82 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>unturnedlib\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Unturned.5.0.0.145\lib\net35\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>unturnedlib\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Unturned.5.0.0.145\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="PlayerInfoLib, Version=1.3.0.2, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>PInfoLib\PlayerInfoLib.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
-    <Reference Include="Rocket.API">
-      <HintPath>lib\Rocket.API.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Practices.ServiceLocation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\Microsoft.Practices.ServiceLocation.dll</HintPath>
     </Reference>
-    <Reference Include="Rocket.Core">
-      <HintPath>lib\Rocket.Core.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Practices.Unity, Version=2.1.505.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\Microsoft.Practices.Unity.dll</HintPath>
     </Reference>
-    <Reference Include="Rocket.Unturned">
-      <HintPath>lib\Rocket.Unturned.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Practices.Unity.Configuration, Version=2.1.505.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\Microsoft.Practices.Unity.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="RestSharp, Version=105.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\RestSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Rocket.API, Version=5.0.0.503, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.API.5.0.0.503\lib\net35\Rocket.API.dll</HintPath>
+    </Reference>
+    <Reference Include="Rocket.Compatibility, Version=5.0.0.503, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Compatibility.5.0.0.503\lib\net35\Rocket.Compatibility.dll</HintPath>
+    </Reference>
+    <Reference Include="Rocket.Core, Version=5.0.0.503, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\Rocket.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Rocket.UnityEngine, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.UnityEngine.5.0.0.29\lib\net35\Rocket.UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="Rocket.Unturned, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Rocket.Unturned.5.0.0.145\lib\net35\Rocket.Unturned.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization">
+      <HintPath>packages\Rocket.Core.5.0.0.503\lib\net35\System.Runtime.Serialization.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>unturnedlib\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Unturned\Unturned_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuildableType.cs" />
-    <Compile Include="Category.cs" />
-    <Compile Include="CommandDisableCleanup.cs" />
-    <Compile Include="CommandListTopPlayers.cs" />
-    <Compile Include="CommandListVehicles.cs" />
-    <Compile Include="Destructable.cs" />
-    <Compile Include="DestructionProcessing.cs" />
-    <Compile Include="Element.cs" />
-    <Compile Include="ElementDataManager.cs" />
-    <Compile Include="ElementType.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="TeleportType.cs" />
-    <Compile Include="WreckingBall.cs" />
+    <Compile Include="Commands\CommandDisableCleanup.cs" />
+    <Compile Include="Commands\Sub Commands\CommandAbort.cs" />
+    <Compile Include="Commands\Sub Commands\CommandConfirm.cs" />
+    <Compile Include="Commands\Sub Commands\CommandListTopPlayers.cs" />
+    <Compile Include="Commands\Sub Commands\CommandListVehicles.cs" />
+    <Compile Include="Commands\Sub Commands\CommandList.cs" />
+    <Compile Include="Commands\Sub Commands\CommandScan.cs" />
+    <Compile Include="Commands\Sub Commands\CommandTeleport.cs" />
+    <Compile Include="Handlers\DestructionHandler.cs" />
+    <Compile Include="Misc\Types.cs" />
+    <Compile Include="WreckingBallPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CommandWreck.cs" />
-    <Compile Include="WreckingBallConfiguration.cs" />
-    <Compile Include="FlagType.cs" />
-    <Compile Include="WreckType.cs" />
+    <Compile Include="Commands\CommandWreck.cs" />
+    <Compile Include="Config.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="README.md" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="lib\Assembly-CSharp-firstpass.dll" />
-    <Content Include="lib\Assembly-CSharp.dll" />
-    <Content Include="lib\Rocket.API.dll" />
-    <Content Include="lib\Rocket.Core.dll" />
-    <Content Include="lib\Rocket.Unturned.dll" />
-    <Content Include="lib\UnityEngine.dll" />
-    <Content Include="PInfoLib\PlayerInfoLib.dll" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

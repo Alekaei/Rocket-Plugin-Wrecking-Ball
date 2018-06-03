@@ -3,18 +3,19 @@ Forked From: https://github.com/cartman-2000/Rocket-Plugin-Wrecking-Ball
 
 # Wrecking Ball
 ### Destroy stuff in the server to clear lag
-
 This addon allows you clear stuff in a defined radius using filters
 
 
 ## Available Commands
 Command | Action
 ------- | -------
-/wreck [filter] [radius]				| Creates new items destruction list
-/wreck confirm							| Confirms list destruction
-/wreck abort							| Aborts list destruction
-/wreck scan [filter] [radius]			| Scan for [filter] in [radius] and list
-/wreck teleport [b/s]					| Teleports caller to the next [b] (barricade) [s] (structure) +200m away
+/wreck [steamId] <filter> <radius>				| Destroys filtered objects in radius
+/wreck scan [steamId] <filter> <radius>			| Scans for filtered objects in radius
+/wreck teleport <barricade|structure|vehicle>	| Teleports to random filtered object
+/wreck list vehicles <radius>					| Lists vehicles and their barricades in radius
+/wreck list topplayers [x=5]					| Lists x players with top object counts
+/wreck confirm									| Confirms last destruction
+/wreck abort									| Aborts last destruction
 
 
 ## Available Filters
@@ -35,23 +36,5 @@ g				| Guards (Barricades / Fortifications)
 i				| Illumination / Generators / Fireplaces
 a				| Agriculture (plantations / platers)
 v				| Vehicles
-*				| Everything except Zombies
+\*				| Everything except Zombies
 z				| Zombies (killing too many zombies at once, crashes the server)
-!				| Uncategorized Elements (Elements that don't have an id associated with it in the plugin like mod structures and barricaeds.)
-
-
-## Available Permissions
-Permission | Action
-------- | -------
-wreck				| allow caller to wreck stuff
-
-
-## Other Options
-Option | Action
-------- | -------
-Enabled								| Enables and disables the addon (does not apply to admins)
-
-
-## Todo List:
-* Randomize the location selection of the teleport feature.
-* Export the Element Id lists to the config file to make it so that custom Id's can be added to the plugin without the need to modify and build a custom plugin with the added Id's.
