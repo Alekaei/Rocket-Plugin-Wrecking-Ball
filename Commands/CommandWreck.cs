@@ -49,9 +49,9 @@ namespace WreckingBall
 					uint radius = context.Parameters.Get<uint> (2);
 
 					if (flag == null)
-						wreckPlugin.DestructionHandler.AddRequest (player, null, radius, player.Entity.Position, WreckType.Wreck, steamID, itemID);
+						wreckPlugin.DestructionHandler.AddRequest (context.User, null, radius, player.Entity.Position, WreckType.Wreck, steamID, itemID);
 					else
-						wreckPlugin.DestructionHandler.AddRequest (player, flag, radius, player.Entity.Position, WreckType.Wreck, steamID, 0);
+						wreckPlugin.DestructionHandler.AddRequest (context.User, flag, radius, player.Entity.Position, WreckType.Wreck, steamID, 0);
 
 					context.User.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_prompt");
 					break;
@@ -61,9 +61,9 @@ namespace WreckingBall
 					radius = context.Parameters.Get<uint> (2);
 
 					if (flag == null)
-						wreckPlugin.DestructionHandler.AddRequest (player, null, radius, player.Entity.Position, WreckType.Wreck, 0, itemID);
+						wreckPlugin.DestructionHandler.AddRequest (context.User, null, radius, player.Entity.Position, WreckType.Wreck, 0, itemID);
 					else
-						wreckPlugin.DestructionHandler.AddRequest (player, flag, radius, player.Entity.Position, WreckType.Wreck, 0, 0);
+						wreckPlugin.DestructionHandler.AddRequest (context.User, flag, radius, player.Entity.Position, WreckType.Wreck, 0, 0);
 
 					context.User.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_prompt");
 					break;

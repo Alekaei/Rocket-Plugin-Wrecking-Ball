@@ -6,12 +6,9 @@ namespace WreckingBall
 {
 	public class Config
 	{
-		public bool Enabled { get; set; } = true;
 		public float DestructionRate { get; set; } = 10;
 		public uint DestructionsPerInterval { get; set; } = 10;
-		public bool LogScans { get; set; } = false;
-		public bool PrintToChat { get; set; } = false;
-		public bool EnablePlayerInfo { get; set; } = false;
+		
 		public bool EnableCleanup { get; set; } = false;
 		public bool BuildableCleanup { get; set; } = true;
 		public float BuildableWaitTime { get; set; } = 30;
@@ -20,6 +17,7 @@ namespace WreckingBall
 		public float PlayerDataWaitTime { get; set; } = 45;
 		public float CleanupIntervalTime { get; set; } = 5;
 		public byte CleanupPerInterval { get; set; } = 10;
+
 		public bool EnableVehicleCap { get; set; } = false;
 		public bool VCapDestroyByElementCount { get; set; } = false;
 		public ushort MaxVehiclesAllowed { get; set; } = 70;
@@ -31,9 +29,6 @@ namespace WreckingBall
 
 		public bool LimitSafeGuards { get; set; } = false;
 		public float LimitSafeGuardsRatio { get; set; } = .6f;
-		public int PlayerElementListCutoff { get; set; } = 100;
-		public uint CategoryListVersion { get; set; } = 0;
-		public uint ElementListVersion { get; set; } = 0;
 
 		[ConfigArray (ElementName = "Catagory")]
 		public List<Category> Categories { get; set; } = new List<Category> ()

@@ -95,10 +95,6 @@
     <Compile Include="Commands\Sub Commands\CommandScan.cs" />
     <Compile Include="Commands\Sub Commands\CommandTeleport.cs" />
     <Compile Include="Handlers\DestructionHandler.cs" />
-    <Compile Include="Misc\Destructable.cs" />
-    <Compile Include="DestructionProcessing.cs" />
-    <Compile Include="ElementDataManager.cs" />
-    <Compile Include="Misc\Extensions.cs" />
     <Compile Include="Misc\Types.cs" />
     <Compile Include="WreckingBallPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

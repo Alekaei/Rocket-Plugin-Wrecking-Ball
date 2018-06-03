@@ -1,4 +1,6 @@
 ﻿using Rocket.API.Commands;
+using Rocket.Core.Commands;
+using Rocket.Unturned.Player;
 using System;
 
 namespace WreckingBall
@@ -12,13 +14,15 @@ namespace WreckingBall
 		{
 			"l"
 		};
-		public string Summary => "Base wreck command";
+		public string Summary => "List Top Player|Vehicles";
 		public string Description => throw new NotImplementedException ();
 		public string Permission => null;
-		public string Syntax => "<Scan | Destroy | Teleport | List>";
+		public string Syntax => "<topplayers|vehicles>";
+
 		public IChildCommand [] ChildCommands => new IChildCommand []
 		{
-
+			new CommandListTopPlayers (wreckPlugin),
+			new CommandListVehicles (wreckPlugin)
 		};
 
 		public CommandList (WreckingBallPlugin plugin)
@@ -28,9 +32,9 @@ namespace WreckingBall
 
 		public void Execute (ICommandContext context)
 		{
-			throw new NotImplementedException ();
+			throw new CommandWrongUsageException ();
 		}
 
-		public bool SupportsUser (Type user) => true;
+		public bool SupportsUser (Type user) => typeof (UnturnedUser).IsAssignableFrom (user);
 	}
 }

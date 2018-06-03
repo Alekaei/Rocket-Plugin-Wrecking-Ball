@@ -25,15 +25,7 @@ namespace WreckingBall
 
 		public void Execute (ICommandContext context)
 		{
-			if (!(caller.HasPermission ("wreck.wreck") || caller.HasPermission ("wreck.*")) && !(caller is ConsolePlayer))
-			{
-				UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_wreck_permission"), Color.red);
-				return;
-			}
-			if (!(caller is ConsolePlayer))
-				UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_aborted"));
-			Logger.Log (WreckingBall.Instance.Translate ("wreckingball_aborted"));
-			DestructionProcessing.Abort (WreckType.Wreck);
+			wreckPlugin.DestructionHandler.AbortRequest (context.User);
 		}
 
 		public bool SupportsUser (Type user) => true;

@@ -1,85 +1,70 @@
 ﻿using System;
+using System.Collections.Generic;
 using Rocket.API.Commands;
+using Rocket.Unturned.Player;
+using SDG.Unturned;
+using System.Linq;
+using Rocket.Core.I18N;
 
 namespace WreckingBall
 {
-	class CommandListTopPlayers : ICommand
+	public class CommandListTopPlayers : IChildCommand
 	{
-		/*
-        public List<string> Aliases
-        {
-            get { return new List<string>() { "listtp" }; }
-        }
+		private WreckingBallPlugin wreckPlugin;
 
-        public AllowedCaller AllowedCaller
-        {
-            get { return AllowedCaller.Both; }
-        }
-
-        public string Help
-        {
-            get { return "Gets the elements counts for players on the server, displays the top counts."; }
-        }
-
-        public string Name
-        {
-            get { return "listtopplayers"; }
-        }
-
-        public List<string> Permissions
-        {
-            get { return new List<string>() { "wreckingball.listtopplayers" }; }
-        }
-
-        public string Syntax
-        {
-            get { return ""; }
-        }
-
-        public void Execute(IRocketPlayer caller, string[] command)
-        {
-            // Get player elements list.
-            DestructionProcessing.Wreck(caller, "", 0, Vector3.zero, WreckType.Counts, FlagType.SteamID, 0, 0);
-            // Grab what we need from the list.
-            Dictionary<ulong, int> shortenedList = DestructionProcessing.pElementCounts.Where(r => r.Value >= WreckingBall.ConfigurationInstance.PlayerElementListCutoff).OrderBy(v => v.Value).ToDictionary(k => k.Key, v => v.Value);
-            DestructionProcessing.pElementCounts.Clear();
-
-            bool getPInfo = false;
-            if (WreckingBall.ConfigurationInstance.EnablePlayerInfo)
-                getPInfo = WreckingBall.IsPInfoLibLoaded();
-
-            foreach (KeyValuePair<ulong, int> value in shortenedList)
-            {
-                string msg = string.Format("Element count: {0}, Player: {1}", value.Value, !getPInfo || value.Key == 0 ? value.Key.ToString() : WreckingBall.Instance.PInfoGenerateMessage(value.Key));
-                if (caller is ConsolePlayer)
-                    Logger.Log(msg, ConsoleColor.Yellow);
-                else
-                    UnturnedChat.Say(caller, msg, Color.yellow);
-            }
-        }
-		*/
-		public string Name => "listtopplayers";
-
-		public string [] Aliases => throw new NotImplementedException ();
-
-		public string Summary => throw new NotImplementedException ();
-
+		public string Name => "topplayers";
+		public string [] Aliases => new string []
+		{
+			"tp"
+		};
+		public string Summary => "List the top players build counts";
 		public string Description => throw new NotImplementedException ();
+		public string Permission => null;
+		public string Syntax => "[max amount]";
+		public IChildCommand [] ChildCommands => new IChildCommand [0];
 
-		public string Permission => throw new NotImplementedException ();
-
-		public string Syntax => throw new NotImplementedException ();
-
-		public IChildCommand [] ChildCommands => throw new NotImplementedException ();
+		public CommandListTopPlayers (WreckingBallPlugin plugin)
+		{
+			this.wreckPlugin = plugin;
+		}
 
 		public void Execute (ICommandContext context)
 		{
-			throw new NotImplementedException ();
+			Dictionary<ulong, int> buildCount = new Dictionary<ulong, int> ();
+			foreach (var region in BarricadeManager.regions)
+			{
+				foreach (var barricade in region.barricades)
+				{
+					if (buildCount.ContainsKey (barricade.owner))
+						buildCount [barricade.owner]++;
+					else
+						buildCount.Add (barricade.owner, 1);
+				}
+			}
+			foreach (var region in StructureManager.regions)
+			{
+				foreach (var structure in region.structures)
+				{
+					if (buildCount.ContainsKey (structure.owner))
+						buildCount [structure.owner]++;
+					else
+						buildCount.Add (structure.owner, 1);
+				}
+			}
+			int maxCount = (context.Parameters.Length > 0) ? context.Parameters.Get<int> (0) : 5;
+			for (int i = 0; i < maxCount; i++)
+			{
+				KeyValuePair<ulong, int> max = buildCount.First (c => c.Value == buildCount.Values.Max ());
+				context.User.SendLocalizedMessage (
+					wreckPlugin.Translations, 
+					"wreckingball_list_tp",
+					i+1,
+					max.Key,
+					max.Value);
+				buildCount.Remove (max.Key);
+			}
 		}
 
-		public bool SupportsUser (Type user)
-		{
-			throw new NotImplementedException ();
-		}
+		public bool SupportsUser (Type user) => typeof (UnturnedUser).IsAssignableFrom (user);
 	}
 }

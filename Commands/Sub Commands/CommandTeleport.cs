@@ -1,5 +1,11 @@
 ﻿using Rocket.API.Commands;
+using Rocket.Unturned.Player;
+using SDG.Unturned;
 using System;
+using System.Linq;
+using Rocket.UnityEngine.Extensions;
+using System.Numerics;
+using Rocket.API.Player;
 
 namespace WreckingBall
 {
@@ -12,14 +18,11 @@ namespace WreckingBall
 		{
 			"t"
 		};
-		public string Summary => "Base wreck command";
+		public string Summary => "Telleport to a random Barricade|Structure|Vehicle";
 		public string Description => throw new NotImplementedException ();
 		public string Permission => null;
-		public string Syntax => "<Scan | Destroy | Teleport | List>";
-		public IChildCommand [] ChildCommands => new IChildCommand []
-		{
-
-		};
+		public string Syntax => "<barricade|structure|vehicle>";
+		public IChildCommand [] ChildCommands => new IChildCommand [0];
 
 		public CommandTeleport (WreckingBallPlugin plugin)
 		{
@@ -28,41 +31,35 @@ namespace WreckingBall
 
 		public void Execute (ICommandContext context)
 		{
-			if (!(caller.HasPermission ("wreck.teleport") || caller.HasPermission ("wreck.*")) && !(caller is ConsolePlayer))
+			UnturnedPlayer player = ((UnturnedUser) wreckPlugin.Container.Resolve<IPlayerManager> ().GetOnlinePlayerById (context.User.Id)).Player;
+
+			Random random = new Random (DateTime.Now.Millisecond);
+
+			switch (context.Parameters.Get<string> (0).ToLower ())
 			{
-				UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_teleport_permission"), Color.red);
-				return;
-			}
-			if (oper.Length > 1)
-			{
-				if (caller is ConsolePlayer)
-				{
-					UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_teleport_not_allowed"));
+				case "b":
+				case "barricade":
+					BarricadeRegion randomBRegion = BarricadeManager.regions [random.Next (0, BarricadeManager.BARRICADE_REGIONS), random.Next (0, BarricadeManager.BARRICADE_REGIONS)];
+					Vector3 randomPoint = randomBRegion.barricades [random.Next (0, randomBRegion.barricades.Count)].point.ToSystemVector ();
+					randomPoint.Y += 10;
+					player.Entity.Teleport (randomPoint);
 					break;
-				}
-				switch (oper [1])
-				{
-					case "b":
-						WreckingBall.Instance.Teleport (player, TeleportType.Barricades);
-						break;
-					case "s":
-						WreckingBall.Instance.Teleport (player, TeleportType.Structures);
-						break;
-					case "v":
-						WreckingBall.Instance.Teleport (player, TeleportType.Vehicles);
-						break;
-					default:
-						UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_help_teleport"));
-						break;
-				}
-			}
-			else
-			{
-				UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_help_teleport"));
-				break;
+				case "s":
+				case "structure":
+					StructureRegion randomSRegion = StructureManager.regions [random.Next (0, StructureManager.STRUCTURE_REGIONS), random.Next (0, StructureManager.STRUCTURE_REGIONS)];
+					randomPoint = randomSRegion.structures [random.Next (0, randomSRegion.structures.Count)].point.ToSystemVector ();
+					randomPoint.Y += 10;
+					player.Entity.Teleport (randomPoint);
+					break;
+				case "v":
+				case "vehicle":
+					randomPoint = VehicleManager.vehicles [random.Next (0, VehicleManager.vehicles.Count)].transform.position.ToSystemVector ();
+					randomPoint.Y += 10;
+					player.Entity.Teleport (randomPoint);
+					break;
 			}
 		}
 
-		public bool SupportsUser (Type user) => true;
+		public bool SupportsUser (Type user) => typeof (UnturnedUser).IsAssignableFrom (user);
 	}
 }

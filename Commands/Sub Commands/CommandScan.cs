@@ -1,4 +1,8 @@
 ﻿using Rocket.API.Commands;
+using Rocket.API.Player;
+using Rocket.Core.Commands;
+using Rocket.Core.I18N;
+using Rocket.Unturned.Player;
 using System;
 
 namespace WreckingBall
@@ -16,10 +20,7 @@ namespace WreckingBall
 		public string Description => throw new NotImplementedException ();
 		public string Permission => null;
 		public string Syntax => "[Steam ID] <Flag | Item ID> <Radius>";
-		public IChildCommand [] ChildCommands => new IChildCommand []
-		{
-
-		};
+		public IChildCommand [] ChildCommands => new IChildCommand [0];
 
 		public CommandScan (WreckingBallPlugin plugin)
 		{
@@ -28,49 +29,41 @@ namespace WreckingBall
 
 		public void Execute (ICommandContext context)
 		{
-			if (!(caller.HasPermission ("wreck.scan") || caller.HasPermission ("wreck.*")) && !(caller is ConsolePlayer))
+			UnturnedPlayer player = ((UnturnedUser) wreckPlugin.Container.Resolve<IPlayerManager> ().GetOnlinePlayerById (context.User.Id)).Player;
+
+			switch (context.Parameters.Length)
 			{
-				UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_scan_permission"), Color.red);
-				return;
-			}
-			if ((oper.Length == 3 && !(caller is ConsolePlayer)) || (oper.Length == 6 && caller is ConsolePlayer))
-			{
-				if (caller is ConsolePlayer)
-				{
-					if (!cmd.GetVectorFromCmd (3, out position))
-					{
-						UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_help_scan_console"));
-						break;
-					}
-				}
-				ushort itemID = 0;
-				if (ushort.TryParse (oper [1], out itemID))
-					WreckingBall.Instance.Scan (caller, oper [1], Convert.ToUInt32 (oper [2]), position, FlagType.ItemID, 0, itemID);
-				else
-					WreckingBall.Instance.Scan (caller, oper [1], Convert.ToUInt32 (oper [2]), position, FlagType.Normal, 0, 0);
-			}
-			else if ((oper.Length == 4 && !(caller is ConsolePlayer)) || (oper.Length == 7 && caller is ConsolePlayer))
-			{
-				ulong steamID = 0;
-				if (caller is ConsolePlayer)
-				{
-					if (!cmd.GetVectorFromCmd (4, out position))
-					{
-						UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_help_scan_console"));
-						break;
-					}
-				}
-				if (oper [1].isCSteamID (out steamID))
-					WreckingBall.Instance.Scan (caller, oper [2], Convert.ToUInt32 (oper [3]), position, FlagType.SteamID, (ulong) steamID, 0);
-				else
-					UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_help_scan"));
-			}
-			else
-			{
-				UnturnedChat.Say (caller, WreckingBall.Instance.Translate ("wreckingball_help_scan"));
+				// Specified Steam ID
+				// /wreck scan {0:steamID} {1:Flag|ItemID} {2:radius}
+				case 3:
+					ulong steamID = context.Parameters.Get<ulong> (0);
+					string flag = (context.Parameters.TryGet<ushort> (1, out ushort itemID) ? null : context.Parameters.Get<string> (1));
+					uint radius = context.Parameters.Get<uint> (2);
+
+					if (flag == null)
+						wreckPlugin.DestructionHandler.AddRequest (context.User, null, radius, player.Entity.Position, WreckType.Scan, steamID, itemID);
+					else
+						wreckPlugin.DestructionHandler.AddRequest (context.User, flag, radius, player.Entity.Position, WreckType.Scan, steamID, 0);
+
+					context.User.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_prompt");
+					break;
+				// No Steam ID Specified
+				case 2:
+					flag = (context.Parameters.TryGet<ushort> (1, out itemID) ? null : context.Parameters.Get<string> (1));
+					radius = context.Parameters.Get<uint> (2);
+
+					if (flag == null)
+						wreckPlugin.DestructionHandler.AddRequest (context.User, null, radius, player.Entity.Position, WreckType.Scan, 0, itemID);
+					else
+						wreckPlugin.DestructionHandler.AddRequest (context.User, flag, radius, player.Entity.Position, WreckType.Scan, 0, 0);
+
+					context.User.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_prompt");
+					break;
+				default:
+					throw new CommandWrongUsageException ();
 			}
 		}
 
-		public bool SupportsUser (Type user) => true;
+		public bool SupportsUser (Type user) => typeof (UnturnedUser).IsAssignableFrom (user);
 	}
 }
