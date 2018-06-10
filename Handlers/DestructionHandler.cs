@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Rocket.Core.Scheduler;
 
 namespace WreckingBall
 {
@@ -43,14 +44,14 @@ namespace WreckingBall
 			scanQueue = new List<DestructionRequest> ();
 			destroyQueue = new Dictionary<int, object> ();
 
-			taskScheduler.ScheduleEveryFrame (wreckPlugin, ScanRun);
+			taskScheduler.ScheduleEveryFrame (wreckPlugin, ScanRun, "WreckingBallScan");
 			lastDestructionRun = DateTime.Now;
-			taskScheduler.ScheduleEveryFrame (wreckPlugin, DestructionRun);
+			taskScheduler.ScheduleEveryFrame (wreckPlugin, DestructionRun, "WreckingBallDestruction");
 
 			if (wreckPlugin.ConfigurationInstance.EnableVehicleCap)
 			{
 				lastVehicleCapRun = DateTime.Now;
-				taskScheduler.ScheduleEveryFrame (wreckPlugin, VehicleCapRun);
+				taskScheduler.ScheduleEveryFrame (wreckPlugin, VehicleCapRun, "WreckingBallVehicleCap");
 			}
 		}
 
