@@ -31,7 +31,7 @@ namespace WreckingBall
 			{ "wreckingball_list_tp", "[#{0}] Steam ID: {0} Object count: {1}." },
 		};
 
-		protected WreckingBallPlugin (
+		public WreckingBallPlugin (
 			IDependencyContainer container,
 			IUserManager userManager,
 			ITaskScheduler taskScheduler,
