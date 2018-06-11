@@ -1,22 +1,18 @@
-﻿using Rocket.API.DependencyInjection;
+﻿using System.Collections.Generic;
+using Rocket.API.DependencyInjection;
 using Rocket.API.Permissions;
 using Rocket.API.Scheduler;
-using Rocket.API.User;
 using Rocket.Core.Logging;
 using Rocket.Core.Plugins;
-using System.Collections.Generic;
+using WreckingBall.Handlers;
 
 namespace WreckingBall
 {
 	public class WreckingBallPlugin : Plugin<Config>
 	{
-		private IUserManager userManager;
-		private ITaskScheduler taskScheduler;
-		private IPermissionProvider permissionProvider;
-
 		public readonly DestructionHandler DestructionHandler;
 
-		public override Dictionary<string, string> DefaultTranslations => new Dictionary<string, string> ()
+		public override Dictionary<string, string> DefaultTranslations => new Dictionary<string, string>
 		{
 			{ "wreckingball_prompt", "Type '<color=green>/wreck confirm</color>' or '<color=red>/wreck abort</color>'." },
 
@@ -28,19 +24,15 @@ namespace WreckingBall
 			{ "wreckingball_added_destruction", "Added above objects to <color=red>destruction</color> queue. Estimated time: {0}" },
 
 			{ "wreckingball_list_v", "[{0}] at position: {1} with {2} barricades." },
-			{ "wreckingball_list_tp", "[#{0}] Steam ID: {0} Object count: {1}." },
+			{ "wreckingball_list_tp", "[#{0}] Steam ID: {0} Object count: {1}." }
 		};
 
 		public WreckingBallPlugin (
 			IDependencyContainer container,
-			IUserManager userManager,
 			ITaskScheduler taskScheduler,
 			IPermissionProvider permissionProvider
 			) : base ("WreckingBallII", container)
 		{
-			this.userManager = userManager;
-			this.taskScheduler = taskScheduler;
-			this.permissionProvider = permissionProvider;
 			DestructionHandler = new DestructionHandler (this, taskScheduler, permissionProvider);
 		}
 
@@ -58,12 +50,8 @@ namespace WreckingBall
 				ConfigurationInstance.DestructionsPerInterval = 1;
 				Logger.LogWarning ("DestructionsPerInterval config value must be at or above 1.");
 			}
-			Configuration.Save ();
-		}
 
-		protected override void OnUnload ()
-		{
-			
+			SaveConfiguration();
 		}
 	}
 }

@@ -87,14 +87,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\CommandDisableCleanup.cs" />
-    <Compile Include="Commands\Sub Commands\CommandAbort.cs" />
-    <Compile Include="Commands\Sub Commands\CommandConfirm.cs" />
-    <Compile Include="Commands\Sub Commands\CommandListTopPlayers.cs" />
-    <Compile Include="Commands\Sub Commands\CommandListVehicles.cs" />
-    <Compile Include="Commands\Sub Commands\CommandList.cs" />
-    <Compile Include="Commands\Sub Commands\CommandScan.cs" />
-    <Compile Include="Commands\Sub Commands\CommandTeleport.cs" />
+    <Compile Include="Commands\SubCommands\CommandAbort.cs" />
+    <Compile Include="Commands\SubCommands\CommandConfirm.cs" />
+    <Compile Include="Commands\SubCommands\CommandListTopPlayers.cs" />
+    <Compile Include="Commands\SubCommands\CommandListVehicles.cs" />
+    <Compile Include="Commands\SubCommands\CommandList.cs" />
+    <Compile Include="Commands\SubCommands\CommandScan.cs" />
+    <Compile Include="Commands\SubCommands\CommandTeleport.cs" />
     <Compile Include="Handlers\DestructionHandler.cs" />
+    <Compile Include="Handlers\DestructionRequest.cs" />
     <Compile Include="Misc\Types.cs" />
     <Compile Include="WreckingBallPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
