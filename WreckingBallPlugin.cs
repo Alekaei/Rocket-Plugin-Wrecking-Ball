@@ -31,7 +31,7 @@ namespace WreckingBall
 			IDependencyContainer container,
 			ITaskScheduler taskScheduler,
 			IPermissionProvider permissionProvider
-			) : base ("WreckingBallII", container)
+			) : base ("WreckingBall II", container)
 		{
 			DestructionHandler = new DestructionHandler (this, taskScheduler, permissionProvider);
 		}
