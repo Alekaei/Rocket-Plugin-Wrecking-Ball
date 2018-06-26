@@ -1,33 +1,34 @@
-﻿using Rocket.API.Commands;
+﻿using System;
+using Rocket.API.Commands;
+using Rocket.API.Plugins;
 using Rocket.Core.Commands;
 using Rocket.Unturned.Player;
-using System;
 
-namespace WreckingBall
+namespace WreckingBall.Commands.SubCommands
 {
 	public class CommandList : IChildCommand
 	{
-		private WreckingBallPlugin wreckPlugin;
+		private readonly WreckingBallPlugin _wreckPlugin;
 
 		public string Name => "List";
-		public string [] Aliases => new string []
+		public string [] Aliases => new[]
 		{
 			"l"
 		};
 		public string Summary => "List Top Player|Vehicles";
-		public string Description => throw new NotImplementedException ();
+		public string Description => null;
 		public string Permission => null;
 		public string Syntax => "<topplayers|vehicles>";
 
 		public IChildCommand [] ChildCommands => new IChildCommand []
 		{
-			new CommandListTopPlayers (wreckPlugin),
-			new CommandListVehicles (wreckPlugin)
+			new CommandListTopPlayers (_wreckPlugin),
+			new CommandListVehicles (_wreckPlugin)
 		};
 
-		public CommandList (WreckingBallPlugin plugin)
+		public CommandList (IPlugin plugin)
 		{
-			this.wreckPlugin = plugin;
+			_wreckPlugin = (WreckingBallPlugin) plugin;
 		}
 
 		public void Execute (ICommandContext context)

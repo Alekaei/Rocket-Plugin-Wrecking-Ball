@@ -1,31 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Rocket.API.Commands;
+using Rocket.API.Plugins;
+using Rocket.Core.I18N;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
-using System.Linq;
-using Rocket.Core.I18N;
 
-namespace WreckingBall
+namespace WreckingBall.Commands.SubCommands
 {
 	public class CommandListTopPlayers : IChildCommand
 	{
-		private WreckingBallPlugin wreckPlugin;
+		private readonly WreckingBallPlugin _wreckPlugin;
 
 		public string Name => "topplayers";
-		public string [] Aliases => new string []
+		public string [] Aliases => new[]
 		{
 			"tp"
 		};
 		public string Summary => "List the top players build counts";
-		public string Description => throw new NotImplementedException ();
+	    public string Description => null;
 		public string Permission => null;
 		public string Syntax => "[max amount]";
-		public IChildCommand [] ChildCommands => new IChildCommand [0];
+		public IChildCommand [] ChildCommands => null;
 
-		public CommandListTopPlayers (WreckingBallPlugin plugin)
+        public CommandListTopPlayers (IPlugin plugin)
 		{
-			this.wreckPlugin = plugin;
+			_wreckPlugin = (WreckingBallPlugin) plugin;
 		}
 
 		public void Execute (ICommandContext context)
@@ -56,7 +57,7 @@ namespace WreckingBall
 			{
 				KeyValuePair<ulong, int> max = buildCount.First (c => c.Value == buildCount.Values.Max ());
 				context.User.SendLocalizedMessage (
-					wreckPlugin.Translations, 
+					_wreckPlugin.Translations, 
 					"wreckingball_list_tp",
 					i+1,
 					max.Key,

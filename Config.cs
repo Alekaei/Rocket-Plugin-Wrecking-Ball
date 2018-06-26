@@ -1,6 +1,6 @@
-﻿using Rocket.Core.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Rocket.Core.Configuration;
 
 namespace WreckingBall
 {
@@ -23,7 +23,7 @@ namespace WreckingBall
 		public string VehicleSignFlag { get; set; } = "n";
 
 		[ConfigArray (ElementName = "Catagory")]
-		public List<Category> Categories { get; set; } = new List<Category> ()
+		public List<Category> Categories { get; set; } = new List<Category>
 		{
 			new Category ('b', "Bed", ConsoleColor.DarkCyan),
 			new Category ('t', "Trap", ConsoleColor.DarkYellow),
@@ -50,7 +50,7 @@ namespace WreckingBall
 			new Category ('!', "Uncategorized", ConsoleColor.White)
 		};
 		[ConfigArray (ElementName = "Element")]
-		public List<Element> Elements { get; set; } = new List<Element> ()
+		public List<Element> Elements { get; set; } = new List<Element>
 		{
 			new Element  (9998, 'Z'),
 			new Element  (9999, 'V'),

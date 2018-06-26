@@ -1,20 +1,16 @@
-﻿using Rocket.API.Commands;
+﻿using System;
+using System.Numerics;
+using Rocket.API.Commands;
+using Rocket.UnityEngine.Extensions;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
-using System;
-using System.Linq;
-using Rocket.UnityEngine.Extensions;
-using System.Numerics;
-using Rocket.API.Player;
 
-namespace WreckingBall
+namespace WreckingBall.Commands.SubCommands
 {
 	public class CommandTeleport : IChildCommand
 	{
-		private WreckingBallPlugin wreckPlugin;
-
 		public string Name => "Teleport";
-		public string [] Aliases => new string []
+		public string [] Aliases => new[]
 		{
 			"t"
 		};
@@ -24,16 +20,11 @@ namespace WreckingBall
 		public string Syntax => "<barricade|structure|vehicle>";
 		public IChildCommand [] ChildCommands => new IChildCommand [0];
 
-		public CommandTeleport (WreckingBallPlugin plugin)
-		{
-			this.wreckPlugin = plugin;
-		}
-
 		public void Execute (ICommandContext context)
 		{
-			UnturnedPlayer player = ((UnturnedUser) wreckPlugin.Container.Resolve<IPlayerManager> ().GetOnlinePlayerById (context.User.Id)).Player;
+		    UnturnedPlayer player = ((UnturnedUser)context.User).Player;
 
-			Random random = new Random (DateTime.Now.Millisecond);
+            Random random = new Random (DateTime.Now.Millisecond);
 
 			switch (context.Parameters.Get<string> (0).ToLower ())
 			{

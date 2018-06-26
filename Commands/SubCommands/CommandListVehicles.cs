@@ -1,37 +1,38 @@
 ﻿using System;
 using System.Numerics;
 using Rocket.API.Commands;
-using Rocket.API.Player;
+using Rocket.API.Plugins;
 using Rocket.Core.I18N;
 using Rocket.UnityEngine.Extensions;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 
-namespace WreckingBall
+namespace WreckingBall.Commands.SubCommands
 {
 	public class CommandListVehicles : IChildCommand
 	{
-		private WreckingBallPlugin wreckPlugin;
+		private readonly WreckingBallPlugin _wreckPlugin;
 
 		public string Name => "vehicles";
-		public string [] Aliases => new string []
+		public string [] Aliases => new[]
 		{
 			"v"
 		};
 		public string Summary => "List vehicles barricade counts";
-		public string Description => throw new NotImplementedException ();
+	    public string Description => null;
 		public string Permission => null;
 		public string Syntax => "<radius>";
-		public IChildCommand [] ChildCommands => new IChildCommand [0];
+	    public IChildCommand[] ChildCommands => null;
 
-		public CommandListVehicles (WreckingBallPlugin plugin)
+		public CommandListVehicles (IPlugin plugin)
 		{
-			this.wreckPlugin = plugin;
+			_wreckPlugin = (WreckingBallPlugin) plugin;
 		}
 
 		public void Execute (ICommandContext context)
 		{
-			UnturnedPlayer player = ((UnturnedUser) wreckPlugin.Container.Resolve<IPlayerManager> ().GetOnlinePlayerById (context.User.Id)).Player;
+		    UnturnedPlayer player = ((UnturnedUser) context.User).Player;
+
 			int radius = context.Parameters.Get<int> (0);
 
 			foreach (var vehicle in VehicleManager.vehicles)
@@ -39,17 +40,17 @@ namespace WreckingBall
 				if (Vector3.Distance (player.Entity.Position, vehicle.transform.position.ToSystemVector ()) > radius)
 					continue;
 				int count = 0;
-				BarricadeManager.tryGetPlant (vehicle.transform, out byte x, out byte y, out ushort plant, out BarricadeRegion region);
+				BarricadeManager.tryGetPlant (vehicle.transform, out byte _, out byte _, out ushort _, out BarricadeRegion region);
 				count += region.barricades.Count;
 
 				foreach (var trainCar in vehicle.trainCars)
 				{
-					BarricadeManager.tryGetPlant (trainCar.root, out x, out y, out plant, out BarricadeRegion tRegion);
+					BarricadeManager.tryGetPlant (trainCar.root, out _, out _, out _, out BarricadeRegion tRegion);
 					count += tRegion.barricades.Count;
 				}
 
 				context.User.SendLocalizedMessage (
-					wreckPlugin.Translations, 
+					_wreckPlugin.Translations, 
 					"wreckingball_list_v", 
 					vehicle.asset.vehicleName, 
 					vehicle.transform.position.ToString (), 

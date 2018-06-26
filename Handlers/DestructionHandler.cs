@@ -1,111 +1,117 @@
-﻿using Rocket.API.Permissions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Rocket.API.Permissions;
 using Rocket.API.Player;
 using Rocket.API.Scheduler;
 using Rocket.API.User;
 using Rocket.Core.I18N;
+using Rocket.Core.Scheduler;
 using Rocket.UnityEngine.Extensions;
-using Rocket.Unturned.Player;
 using SDG.Unturned;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+using UnityEngine;
+using WreckingBall.Misc;
+using Vector3 = System.Numerics.Vector3;
 
-namespace WreckingBall
+namespace WreckingBall.Handlers
 {
 	public class DestructionHandler
 	{
-		private WreckingBallPlugin wreckPlugin;
-		private List<DestructionRequest> pendingConfirmation;
-		private List<DestructionRequest> scanQueue;
-		private Dictionary<int, object> destroyQueue;
+		private readonly WreckingBallPlugin _wreckPlugin;
+		private List<DestructionRequest> _pendingConfirmation;
+		private List<DestructionRequest> _scanQueue;
+		private Dictionary<int, object> _destroyQueue;
 
-		private ITaskScheduler taskScheduler;
-		private IPermissionProvider permissionProvider;
+		private readonly ITaskScheduler _taskScheduler;
+		private readonly IPermissionProvider _permissionProvider;
 
-		private DateTime lastDestructionRun;
-		private int amountDestroyed;
+		private DateTime _lastDestructionRun;
+		private int _amountDestroyed;
 
 		public DestructionHandler (WreckingBallPlugin plugin, ITaskScheduler taskScheduler, IPermissionProvider permissionProvider)
 		{
-			this.wreckPlugin = plugin;
-			this.taskScheduler = taskScheduler;
-			this.permissionProvider = permissionProvider;
+			_wreckPlugin = plugin;
+			_taskScheduler = taskScheduler;
+			_permissionProvider = permissionProvider;
 
-			pendingConfirmation = new List<DestructionRequest> ();
-			scanQueue = new List<DestructionRequest> ();
-			destroyQueue = new Dictionary<int, object> ();
+			_pendingConfirmation = new List<DestructionRequest> ();
+			_scanQueue = new List<DestructionRequest> ();
+			_destroyQueue = new Dictionary<int, object> ();
 		}
 
 		public void Load ()
 		{
-			pendingConfirmation = new List<DestructionRequest> ();
-			scanQueue = new List<DestructionRequest> ();
-			destroyQueue = new Dictionary<int, object> ();
+			_pendingConfirmation = new List<DestructionRequest> ();
+			_scanQueue = new List<DestructionRequest> ();
+			_destroyQueue = new Dictionary<int, object> ();
 
-			taskScheduler.ScheduleEveryFrame (wreckPlugin, ScanRun);
-			lastDestructionRun = DateTime.Now;
-			taskScheduler.ScheduleEveryFrame (wreckPlugin, DestructionRun);
+			_taskScheduler.ScheduleEveryFrame (_wreckPlugin, ScanRun, "WreckingBallScan");
+			_lastDestructionRun = DateTime.Now;
+			_taskScheduler.ScheduleEveryFrame (_wreckPlugin, DestructionRun, "WreckingBallDestruction");
 
-			if (wreckPlugin.ConfigurationInstance.EnableVehicleCap)
+			if (_wreckPlugin.ConfigurationInstance.EnableVehicleCap)
 			{
-				lastVehicleCapRun = DateTime.Now;
-				taskScheduler.ScheduleEveryFrame (wreckPlugin, VehicleCapRun);
+				_lastVehicleCapRun = DateTime.Now;
+				_taskScheduler.ScheduleEveryFrame (_wreckPlugin, VehicleCapRun, "WreckingBallVehicleCap");
 			}
 		}
 
 		public void AddRequest (IUser user, string filter, uint radius, Vector3 position, WreckType wreckType, ulong steamID, ushort itemID)
 		{
-			if (pendingConfirmation.Any (c => c.user == user))
+			if (_pendingConfirmation.Any (c => Equals(c.User, user)))
 			{
-				pendingConfirmation.Remove (pendingConfirmation.FirstOrDefault (c => c.user == user));
+				_pendingConfirmation.Remove (_pendingConfirmation.FirstOrDefault (c => Equals(c.User, user)));
 				return;
 			}
-			pendingConfirmation.Add (new DestructionRequest (user, filter, radius, position, wreckType, steamID, itemID));
+			_pendingConfirmation.Add (new DestructionRequest (user, filter, radius, position, wreckType, steamID, itemID));
 		}
 
 		public void ConfirmRequest (IUser user)
 		{
-			if (pendingConfirmation.Any (c => c.user == user))
-			{
-				DestructionRequest destructionRequest = pendingConfirmation.FirstOrDefault (c => c.user == user);
-				if ((DateTime.Now - destructionRequest.requestAdded).TotalSeconds >= 120)
-				{
-					pendingConfirmation.Remove (destructionRequest);
-					user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_no_request");
-					return;
-				}
-				scanQueue.Add (destructionRequest);
-				pendingConfirmation.Remove (destructionRequest);
-				user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_confirmed");
-				return;
-			}
-			user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_no_request");
+		    if (_pendingConfirmation.All(c => !Equals(c.User, user)))
+		    {
+		        user.SendLocalizedMessage(_wreckPlugin.Translations, "wreckingball_no_request");
+		        return;
+		    }
+
+		    DestructionRequest destructionRequest = _pendingConfirmation.FirstOrDefault(c => Equals(c.User, user));
+		    if (destructionRequest != null && (DateTime.Now - destructionRequest.RequestAdded).TotalSeconds >= 120)
+		    {
+		        _pendingConfirmation.Remove(destructionRequest);
+		        user.SendLocalizedMessage(_wreckPlugin.Translations, "wreckingball_no_request");
+		        return;
+		    }
+
+		    _scanQueue.Add(destructionRequest);
+		    _pendingConfirmation.Remove(destructionRequest);
+		    user.SendLocalizedMessage(_wreckPlugin.Translations, "wreckingball_confirmed");
 		}
 
 		public void AbortRequest (IUser user)
 		{
-			if (pendingConfirmation.Any (c => c.user == user))
-			{
-				var destructionRequest = pendingConfirmation.FirstOrDefault (c => c.user == user);
-				if ((DateTime.Now - destructionRequest.requestAdded).TotalSeconds >= 120)
-				{
-					pendingConfirmation.Remove (destructionRequest);
-					user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_no_request");
-					return;
-				}
-				pendingConfirmation.Remove (destructionRequest);
-				user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_aborted");
-				return;
-			}
-			user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_no_request");
+		    if (_pendingConfirmation.All(c => !Equals(c.User, user)))
+		    {
+		        user.SendLocalizedMessage(_wreckPlugin.Translations, "wreckingball_no_request");
+		        return;
+		    }
+
+		    var destructionRequest = _pendingConfirmation.FirstOrDefault(c => Equals(c.User, user));
+		    if (destructionRequest != null && (DateTime.Now - destructionRequest.RequestAdded).TotalSeconds >= 120)
+		    {
+		        _pendingConfirmation.Remove(destructionRequest);
+		        user.SendLocalizedMessage(_wreckPlugin.Translations, "wreckingball_no_request");
+		        return;
+		    }
+
+		    _pendingConfirmation.Remove(destructionRequest);
+		    user.SendLocalizedMessage(_wreckPlugin.Translations, "wreckingball_aborted");
 		}
 
 		public void ScanRun ()
 		{
-			if (scanQueue.Count == 0)
+			if (_scanQueue.Count == 0)
 				return;
-			DestructionRequest request = scanQueue.First ();
+			DestructionRequest request = _scanQueue.First ();
 
 			int objectsFound = 0;
 
@@ -113,45 +119,35 @@ namespace WreckingBall
 			{
 				foreach (BarricadeData data in region.barricades)
 				{
-					if (Vector3.Distance (request.position, data.point.ToSystemVector ()) > request.radius)
+					if (Vector3.Distance (request.Position, data.point.ToSystemVector ()) > request.Radius)
 						continue;
 
-					if (destroyQueue.ContainsKey (data.GetHashCode ()))
+					if (_destroyQueue.ContainsKey (data.GetHashCode ()))
 						continue;
 
-					if (request.steamID != 0)
+					if (request.SteamID != 0)
 					{
-						if (data.owner != request.steamID)
+						if (data.owner != request.SteamID)
 							continue;
-						if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve<IPlayerManager> ().GetPlayer (request.steamID.ToString ()), new string []
-							{
-								"wreckingball.skip.barricade",
-								"wreckingball.skip.*",
-								"wreckingball.*"
-							}) == PermissionResult.Grant)
+						if (request.WreckType != WreckType.Scan && _permissionProvider.CheckHasAnyPermission (_wreckPlugin.Container.Resolve<IPlayerManager> ().GetPlayer (request.SteamID.ToString ()), "wreckingball.skip.barricade", "wreckingball.skip.*", "wreckingball.*") == PermissionResult.Grant)
 							continue;
 					}
 
-					if (request.itemID != 0)
-						if (data.barricade.id != request.itemID)
+					if (request.ItemID != 0)
+						if (data.barricade.id != request.ItemID)
 							continue;
 
-					if (request.filters != null)
-						if (!wreckPlugin.ConfigurationInstance.Elements.Any (c => request.filters.Contains (c.CategoryId) && c.Id == data.barricade.id || request.filters.Contains ('*')))
+					if (request.Filters != null)
+						if (!_wreckPlugin.ConfigurationInstance.Elements.Any (c => request.Filters.Contains (c.CategoryId) && c.Id == data.barricade.id || request.Filters.Contains ('*')))
 							continue;
 
-					if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (request.user, new string []
-						{
-							"wreckingball.skip.barricade",
-							"wreckingball.skip.*",
-							"wreckingball.*"
-						}) == PermissionResult.Grant)
+					if (request.WreckType != WreckType.Scan && _permissionProvider.CheckHasAnyPermission (request.User, "wreckingball.skip.barricade", "wreckingball.skip.*", "wreckingball.*") == PermissionResult.Grant)
 						continue;
 
 					objectsFound++;
-					if (request.wreckType == WreckType.Scan)
+					if (request.WreckType == WreckType.Scan)
 						continue;
-					destroyQueue.Add (data.GetHashCode (), data);
+					_destroyQueue.Add (data.GetHashCode (), data);
 				}
 			}
 
@@ -159,162 +155,142 @@ namespace WreckingBall
 			{
 				foreach (StructureData data in region.structures)
 				{
-					if (Vector3.Distance (request.position, data.point.ToSystemVector ()) > request.radius)
+					if (Vector3.Distance (request.Position, data.point.ToSystemVector ()) > request.Radius)
 						continue;
 
-					if (destroyQueue.ContainsKey (data.GetHashCode ()))
+					if (_destroyQueue.ContainsKey (data.GetHashCode ()))
 						continue;
 
-					if (request.steamID != 0)
+					if (request.SteamID != 0)
 					{
-						if (data.owner != request.steamID)
+						if (data.owner != request.SteamID)
 							continue;
-							if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve <IPlayerManager> ().GetPlayer (request.steamID.ToString ()), new string []
-							{
-								"wreckingball.skip.structure",
-								"wreckingball.skip.*",
-								"wreckingball.*"
-							}) == PermissionResult.Grant)
+							if (request.WreckType != WreckType.Scan && _permissionProvider.CheckHasAnyPermission (_wreckPlugin.Container.Resolve <IPlayerManager> ().GetPlayer (request.SteamID.ToString ()), "wreckingball.skip.structure", "wreckingball.skip.*", "wreckingball.*") == PermissionResult.Grant)
 							continue;
 					}
 
-					if (request.itemID != 0)
-						if (data.structure.id != request.itemID)
+					if (request.ItemID != 0)
+						if (data.structure.id != request.ItemID)
 							continue;
 
-					if (request.filters != null)
-						if (!wreckPlugin.ConfigurationInstance.Elements.Any (c => request.filters.Contains (c.CategoryId) && c.Id == data.structure.id || request.filters.Contains ('*')))
+					if (request.Filters != null)
+						if (!_wreckPlugin.ConfigurationInstance.Elements.Any (c => request.Filters.Contains (c.CategoryId) && c.Id == data.structure.id || request.Filters.Contains ('*')))
 							continue;
 
-					if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (request.user, new string []
-						{
-							"wreckingball.skip.structure",
-							"wreckingball.skip.*",
-							"wreckingball.*"
-						}) == PermissionResult.Grant)
+					if (request.WreckType != WreckType.Scan && _permissionProvider.CheckHasAnyPermission (request.User, "wreckingball.skip.structure", "wreckingball.skip.*", "wreckingball.*") == PermissionResult.Grant)
 						continue;
 
 					objectsFound++;
-					if (request.wreckType == WreckType.Scan)
+					if (request.WreckType == WreckType.Scan)
 						continue;
-					destroyQueue.Add (data.GetHashCode (), data);
+					_destroyQueue.Add (data.GetHashCode (), data);
 				}
 			}
 
 			foreach (InteractableVehicle vehicle in VehicleManager.vehicles)
 			{
-				if (Vector3.Distance (request.position, vehicle.transform.position.ToSystemVector ()) > request.radius)
+				if (Vector3.Distance (request.Position, vehicle.transform.position.ToSystemVector ()) > request.Radius)
 					continue;
 
-				if (destroyQueue.ContainsKey (vehicle.GetHashCode ()))
+				if (_destroyQueue.ContainsKey (vehicle.GetHashCode ()))
 					continue;
 
-				if (request.steamID != 0)
+				if (request.SteamID != 0)
 				{
-					if (vehicle.lockedOwner.m_SteamID != request.steamID)
+					if (vehicle.lockedOwner.m_SteamID != request.SteamID)
 						continue;
-					if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve<IPlayerManager> ().GetPlayer (request.steamID.ToString ()), new string []
-						{
-							"wreckingball.skip.vehicle",
-							"wreckingball.skip.*",
-							"wreckingball.*"
-						}) == PermissionResult.Grant)
+					if (request.WreckType != WreckType.Scan && _permissionProvider.CheckHasAnyPermission (_wreckPlugin.Container.Resolve<IPlayerManager> ().GetPlayer (request.SteamID.ToString ()), "wreckingball.skip.vehicle", "wreckingball.skip.*", "wreckingball.*") == PermissionResult.Grant)
 						continue;
 				}
 
-				if (request.itemID != 0)
-					if (vehicle.id != request.itemID)
+				if (request.ItemID != 0)
+					if (vehicle.id != request.ItemID)
 						continue;
 
-				if (request.filters != null)
-					if (!wreckPlugin.ConfigurationInstance.Elements.Any (c => request.filters.Contains (c.CategoryId) && c.Id == vehicle.id || request.filters.Contains ('*')))
+				if (request.Filters != null)
+					if (!_wreckPlugin.ConfigurationInstance.Elements.Any (c => request.Filters.Contains (c.CategoryId) && c.Id == vehicle.id || request.Filters.Contains ('*')))
 						continue;
 
-				if (request.wreckType != WreckType.Scan && permissionProvider.CheckHasAnyPermission (request.user, new string []
-					{
-						"wreckingball.skip.vehicle",
-						"wreckingball.skip.*",
-							"wreckingball.*"
-					}) == PermissionResult.Grant)
+				if (request.WreckType != WreckType.Scan && _permissionProvider.CheckHasAnyPermission (request.User, "wreckingball.skip.vehicle", "wreckingball.skip.*", "wreckingball.*") == PermissionResult.Grant)
 					continue;
 
 				objectsFound++;
-				if (request.wreckType == WreckType.Scan)
+				if (request.WreckType == WreckType.Scan)
 					continue;
-				destroyQueue.Add (vehicle.GetHashCode (), vehicle);
+				_destroyQueue.Add (vehicle.GetHashCode (), vehicle);
 			}
 
-			if (request.filters.Contains ('A'))
+			if (request.Filters.Contains ('A'))
 			{
 				foreach (Animal animal in AnimalManager.animals)
 				{
-					if (Vector3.Distance (request.position, animal.transform.position.ToSystemVector ()) > request.radius)
+					if (Vector3.Distance (request.Position, animal.transform.position.ToSystemVector ()) > request.Radius)
 						continue;
 
-					if (destroyQueue.ContainsKey (animal.GetHashCode ()))
+					if (_destroyQueue.ContainsKey (animal.GetHashCode ()))
 						continue;
 
-					if (request.itemID != 0)
-						if (animal.id != request.itemID)
+					if (request.ItemID != 0)
+						if (animal.id != request.ItemID)
 							continue;
 
 					objectsFound++;
-					if (request.wreckType == WreckType.Scan)
+					if (request.WreckType == WreckType.Scan)
 						continue;
-					destroyQueue.Add (animal.GetHashCode (), animal);
+					_destroyQueue.Add (animal.GetHashCode (), animal);
 				}
 			}
-			if (request.filters.Contains ('Z'))
+			if (request.Filters.Contains ('Z'))
 			{
 				foreach (ZombieRegion region in ZombieManager.regions)
 				{
 					foreach (Zombie zombie in region.zombies)
 					{
-						if (Vector3.Distance (request.position, zombie.transform.position.ToSystemVector ()) > request.radius)
+						if (Vector3.Distance (request.Position, zombie.transform.position.ToSystemVector ()) > request.Radius)
 							continue;
 
-						if (destroyQueue.ContainsKey (zombie.GetHashCode ()))
+						if (_destroyQueue.ContainsKey (zombie.GetHashCode ()))
 							continue;
 
-						if (request.itemID != 0)
-							if (zombie.id != request.itemID)
+						if (request.ItemID != 0)
+							if (zombie.id != request.ItemID)
 								continue;
 
 						objectsFound++;
-						if (request.wreckType == WreckType.Scan)
+						if (request.WreckType == WreckType.Scan)
 							continue;
-						destroyQueue.Add (zombie.GetHashCode (), zombie);
+						_destroyQueue.Add (zombie.GetHashCode (), zombie);
 					}
 				}
 			}
 
-			request.user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_scan", objectsFound);
-			scanQueue.Remove (request);
-			if (request.wreckType == WreckType.Scan)
+			request.User.SendLocalizedMessage (_wreckPlugin.Translations, "wreckingball_scan", objectsFound);
+			_scanQueue.Remove (request);
+			if (request.WreckType == WreckType.Scan)
 				return;
-			request.user.SendLocalizedMessage (wreckPlugin.Translations, "wreckingball_added_destruction", FormattedTimeUntilDestroyed ());
+			request.User.SendLocalizedMessage (_wreckPlugin.Translations, "wreckingball_added_destruction", FormattedTimeUntilDestroyed ());
 		}
 
 		public void DestructionRun ()
 		{
-			if (destroyQueue.Count == 0)
+			if (_destroyQueue.Count == 0)
 				return;
-			if ((DateTime.Now - lastDestructionRun).TotalMilliseconds <= (1000/wreckPlugin.ConfigurationInstance.DestructionInterval) &&
-				amountDestroyed >= wreckPlugin.ConfigurationInstance.DestructionsPerInterval)
+			if ((DateTime.Now - _lastDestructionRun).TotalMilliseconds <= (1000/_wreckPlugin.ConfigurationInstance.DestructionInterval) &&
+				_amountDestroyed >= _wreckPlugin.ConfigurationInstance.DestructionsPerInterval)
 				return;
 
-			KeyValuePair<int, object> nextDestroy = destroyQueue.First ();
+			KeyValuePair<int, object> nextDestroy = _destroyQueue.First ();
 
 			if (nextDestroy.Value is BarricadeData bData)
 			{
-				UnityEngine.Transform transform = UnityEngine.Physics.OverlapSphere (bData.point, 0.5f, 1 << LayerMasks.BARRICADE).Where (c => c.transform.position == bData.point).FirstOrDefault ()?.transform;
+				Transform transform = Physics.OverlapSphere (bData.point, 0.5f, 1 << LayerMasks.BARRICADE).FirstOrDefault (c => c.transform.position == bData.point)?.transform;
 				if (transform == null)
 					return;
 				BarricadeManager.damage (transform, ushort.MaxValue, 1, false);
 			}
 			if (nextDestroy.Value is StructureData sData)
 			{
-				UnityEngine.Transform transform = UnityEngine.Physics.OverlapSphere (sData.point, 0.5f, 1 << LayerMasks.BARRICADE).Where (c => c.transform.position == sData.point).FirstOrDefault ()?.transform;
+				Transform transform = Physics.OverlapSphere (sData.point, 0.5f, 1 << LayerMasks.BARRICADE).FirstOrDefault (c => c.transform.position == sData.point)?.transform;
 				if (transform == null)
 					return;
 				StructureManager.damage (transform, transform.position, ushort.MaxValue, 1, false);
@@ -325,69 +301,64 @@ namespace WreckingBall
 			}
 			if (nextDestroy.Value is Animal aData)
 			{
-				aData.askDamage (byte.MaxValue, aData.transform.up, out EPlayerKill playerKill, out uint xp);
+				aData.askDamage (byte.MaxValue, aData.transform.up, out EPlayerKill _, out uint _);
 			}
 			if (nextDestroy.Value is Zombie zData)
 			{
-				zData.askDamage (byte.MaxValue, zData.transform.up, out EPlayerKill playerKill, out uint xp);
+				zData.askDamage (byte.MaxValue, zData.transform.up, out EPlayerKill _, out uint _);
 			}
 
-			destroyQueue.Remove (nextDestroy.Key);
-			amountDestroyed++;
-			if (amountDestroyed == wreckPlugin.ConfigurationInstance.DestructionsPerInterval)
-				lastDestructionRun = DateTime.Now;
+			_destroyQueue.Remove (nextDestroy.Key);
+			_amountDestroyed++;
+			if (_amountDestroyed == _wreckPlugin.ConfigurationInstance.DestructionsPerInterval)
+				_lastDestructionRun = DateTime.Now;
 		}
 
-		private DateTime lastVehicleCapRun;
+		private DateTime _lastVehicleCapRun;
 		public void VehicleCapRun ()
 		{
-			if ((DateTime.Now - lastVehicleCapRun).TotalSeconds < wreckPlugin.ConfigurationInstance.VehicleDestructionInterval)
+			if ((DateTime.Now - _lastVehicleCapRun).TotalSeconds < _wreckPlugin.ConfigurationInstance.VehicleDestructionInterval)
 				return;
 			int runCount = 0;
 
-			while (VehicleManager.vehicles.Count > wreckPlugin.ConfigurationInstance.MaxVehiclesAllowed)
+			while (VehicleManager.vehicles.Count > _wreckPlugin.ConfigurationInstance.MaxVehiclesAllowed)
 			{
 				InteractableVehicle vehicle = VehicleManager.vehicles.FirstOrDefault ();
 
 				if (vehicle == null)
 				{
-					lastVehicleCapRun = DateTime.Now;
+					_lastVehicleCapRun = DateTime.Now;
 					return;
 				}
 
-				if (vehicle.isLocked && permissionProvider.CheckHasAnyPermission (wreckPlugin.Container.Resolve <IPlayerManager> ().GetPlayer (vehicle.lockedOwner.m_SteamID.ToString ()), new string []
-					{
-						"wreck.skip.vehicle",
-						"wreck.skip.*",
-						"wreck.*"
-					}) == PermissionResult.Grant)
+				if (vehicle.isLocked && _permissionProvider.CheckHasAnyPermission (_wreckPlugin.Container.Resolve <IPlayerManager> ().GetPlayer (vehicle.lockedOwner.m_SteamID.ToString ()), "wreck.skip.vehicle", "wreck.skip.*", "wreck.*") == PermissionResult.Grant)
 				{
-					lastVehicleCapRun = DateTime.Now;
+					_lastVehicleCapRun = DateTime.Now;
 					return;
 				}
 
 				bool skip = false;
 				int count = 0;
 
-				BarricadeManager.tryGetPlant (vehicle.transform, out byte x, out byte y, out ushort plant, out BarricadeRegion region);
+				BarricadeManager.tryGetPlant (vehicle.transform, out byte _, out byte _, out ushort _, out BarricadeRegion region);
 				count += region.barricades.Count;
 
-				if (wreckPlugin.ConfigurationInstance.KeepVehiclesWithSigns && region.drops.Any (c => c.interactable is InteractableSign sign && sign.text.Contains (wreckPlugin.ConfigurationInstance.VehicleSignFlag)))
+				if (_wreckPlugin.ConfigurationInstance.KeepVehiclesWithSigns && region.drops.Any (c => c.interactable is InteractableSign sign && sign.text.Contains (_wreckPlugin.ConfigurationInstance.VehicleSignFlag)))
 					continue;
 
 				foreach (var tranCar in vehicle.trainCars)
 				{
-					BarricadeManager.tryGetPlant (vehicle.transform, out x, out y, out plant, out BarricadeRegion tRegion);
+					BarricadeManager.tryGetPlant (tranCar.root, out _, out _, out _, out BarricadeRegion tRegion);
 					count += tRegion.barricades.Count;
-					if (wreckPlugin.ConfigurationInstance.KeepVehiclesWithSigns && tRegion.drops.Any (c => c.interactable is InteractableSign sign && sign.text.Contains (wreckPlugin.ConfigurationInstance.VehicleSignFlag)))
+					if (_wreckPlugin.ConfigurationInstance.KeepVehiclesWithSigns && tRegion.drops.Any (c => c.interactable is InteractableSign sign && sign.text.Contains (_wreckPlugin.ConfigurationInstance.VehicleSignFlag)))
 					{
 						skip = true;
 						break;
 					}
 				}
 
-				if (wreckPlugin.ConfigurationInstance.LowElementCountOnly)
-					if (count >= wreckPlugin.ConfigurationInstance.MinElementCount)
+				if (_wreckPlugin.ConfigurationInstance.LowElementCountOnly)
+					if (count >= _wreckPlugin.ConfigurationInstance.MinElementCount)
 						skip = true;
 
 				if (!skip)
@@ -398,12 +369,12 @@ namespace WreckingBall
 					break;
 			}
 
-			lastVehicleCapRun = DateTime.Now;
+			_lastVehicleCapRun = DateTime.Now;
 		}
 
 		public string FormattedTimeUntilDestroyed ()
 		{
-			float time = (float) wreckPlugin.ConfigurationInstance.DestructionsPerInterval * (float) (destroyQueue.Count / wreckPlugin.ConfigurationInstance.DestructionsPerInterval);
+			float time = _wreckPlugin.ConfigurationInstance.DestructionsPerInterval * (float) (_destroyQueue.Count / _wreckPlugin.ConfigurationInstance.DestructionsPerInterval);
 
 			TimeSpan estimated = TimeSpan.FromSeconds (time);
 
@@ -419,31 +390,6 @@ namespace WreckingBall
 				formatted += estimated.Seconds + ((estimated.Seconds == 1) ? " second" : " seconds");
 
 			return formatted;
-		}
-	}
-
-	public class DestructionRequest
-	{
-		public IUser user;
-		public char [] filters;
-		public uint radius;
-		public Vector3 position;
-		public WreckType wreckType;
-		public ulong steamID;
-		public ushort itemID;
-
-		public DateTime requestAdded;
-
-		public DestructionRequest (IUser user, string filter, uint radius, Vector3 position, WreckType wreckType, ulong steamID, ushort itemID)
-		{
-			this.user = user;
-			this.filters = filter.Split ().Cast<char> ().ToArray ();
-			this.radius = radius;
-			this.position = position;
-			this.wreckType = wreckType;
-			this.steamID = steamID;
-			this.itemID = itemID;
-			this.requestAdded = DateTime.Now;
 		}
 	}
 }
